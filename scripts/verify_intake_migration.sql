@@ -10,6 +10,8 @@ DECLARE
   points_earned bigint;
   points_redeemed bigint;
   points_version bigint;
+  points_account_id uuid;
+  application_fence_columns integer;
 BEGIN
   SELECT count(*)
   INTO hhm_table_count
@@ -33,6 +35,17 @@ BEGIN
 
   IF protected_table_count <> 7 THEN
     RAISE EXCEPTION 'expected 7 forced-RLS tables, found %', protected_table_count;
+  END IF;
+
+  SELECT count(*)
+  INTO application_fence_columns
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'hhm_applications'
+    AND column_name IN ('status_version', 'last_admin_operation_id');
+
+  IF application_fence_columns <> 2 THEN
+    RAISE EXCEPTION 'application admin-transition fence columns are missing';
   END IF;
 
   SELECT count(*)
@@ -116,12 +129,12 @@ BEGIN
   )
   VALUES ('verify-redeem', 'subject-1', -25, 'verification_redeem', 'admin-1');
 
-  SELECT balance, lifetime_earned, lifetime_redeemed, version
-  INTO points_balance, points_earned, points_redeemed, points_version
+  SELECT id, balance, lifetime_earned, lifetime_redeemed, version
+  INTO points_account_id, points_balance, points_earned, points_redeemed, points_version
   FROM public.hhm_user_points_accounts
   WHERE subject = 'subject-1';
 
-  IF (points_balance, points_earned, points_redeemed, points_version)
+  IF points_account_id IS NULL OR (points_balance, points_earned, points_redeemed, points_version)
     <> (75::bigint, 100::bigint, 25::bigint, 2::bigint) THEN
     RAISE EXCEPTION 'points projection is inconsistent';
   END IF;
