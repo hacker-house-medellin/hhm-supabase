@@ -1,0 +1,21 @@
+{
+  "$schema": "./schemas/catalog.schema.json",
+  "version": 1,
+  "github": {
+    "organization": "hacker-house-medellin",
+    "repository": "hacker-house-medellin/hhm-supabase",
+    "defaultBranch": "main"
+  },
+  "supabaseOrganization": {
+    "id": "zbkkhhovcgpjgfhttaii",
+    "name": "hhaus"
+  },
+  "canonicalProjectRef": "bihpugkzayenywfyajnr",
+  "projects": [
+    {
+      "ref": "bihpugkzayenywfyajnr",
+      "target": "projects/bihpugkzayenywfyajnr/target.json"
+    }
+  ]
+}
+
