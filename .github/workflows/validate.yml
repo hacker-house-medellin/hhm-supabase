@@ -59,5 +59,10 @@ jobs:
           psql
           --file
           projects/bihpugkzayenywfyajnr/supabase/migrations/20260831000100_hhm_application_placement.sql
+      - name: Apply the Supabase event-trigger ACL hardening
+        run: >-
+          psql
+          --file
+          projects/bihpugkzayenywfyajnr/supabase/migrations/20260831000200_harden_rls_auto_enable_acl.sql
       - name: Verify RLS, grants, bucket, and points invariants
         run: psql --file scripts/verify_intake_migration.sql

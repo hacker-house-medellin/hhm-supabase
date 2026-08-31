@@ -126,6 +126,18 @@ BEGIN
     RAISE EXCEPTION 'authenticated can execute an internal trigger function';
   END IF;
 
+  IF has_function_privilege(
+    'anon',
+    'public.rls_auto_enable()',
+    'EXECUTE'
+  ) OR has_function_privilege(
+    'authenticated',
+    'public.rls_auto_enable()',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'browser roles can execute the RLS event-trigger function';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1
     FROM storage.buckets

@@ -22,3 +22,19 @@ CREATE TABLE storage.buckets (
   file_size_limit bigint,
   allowed_mime_types text[]
 );
+
+-- Model the provider-installed event-trigger function and its permissive
+-- default ACL so the provider hardening migration is exercised in CI.
+CREATE FUNCTION public.rls_auto_enable()
+RETURNS event_trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO pg_catalog
+AS $function$
+BEGIN
+  NULL;
+END
+$function$;
+
+GRANT EXECUTE ON FUNCTION public.rls_auto_enable()
+TO anon, authenticated;
