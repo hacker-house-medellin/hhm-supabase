@@ -12,6 +12,8 @@ DECLARE
   points_version bigint;
   points_account_id uuid;
   application_fence_columns integer;
+  application_placement_columns integer;
+  application_placement_constraints integer;
 BEGIN
   SELECT count(*)
   INTO hhm_table_count
@@ -46,6 +48,39 @@ BEGIN
 
   IF application_fence_columns <> 2 THEN
     RAISE EXCEPTION 'application admin-transition fence columns are missing';
+  END IF;
+
+  SELECT count(*)
+  INTO application_placement_columns
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'hhm_applications'
+    AND column_name IN (
+      'allergy_notes',
+      'noise_sensitivity',
+      'light_sensitivity',
+      'room_preference_notes',
+      'roommate_preference',
+      'preferred_room_occupancy',
+      'roommate_for_lower_cost',
+      'roommate_for_social_connection',
+      'accommodation_data_consent'
+    );
+
+  SELECT count(*)
+  INTO application_placement_constraints
+  FROM pg_constraint
+  WHERE conrelid = 'public.hhm_applications'::regclass
+    AND conname IN (
+      'hhm_applications_noise_sensitivity',
+      'hhm_applications_light_sensitivity',
+      'hhm_applications_roommate_preference',
+      'hhm_applications_room_occupancy',
+      'hhm_applications_accommodation_consent'
+    );
+
+  IF application_placement_columns <> 9 OR application_placement_constraints <> 5 THEN
+    RAISE EXCEPTION 'application placement columns or constraints are missing';
   END IF;
 
   SELECT count(*)
