@@ -21,3 +21,48 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Validate JSON Schema, catalog, targets, paths, and secret boundaries
         run: npm run validate
+
+  intake-migration:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hhm_supabase_verify
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hhm_supabase_verify"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: hhm_supabase_verify
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Create Supabase-role and Storage test boundary
+        run: psql --file scripts/intake_migration_prelude.sql
+      - name: Apply the ordered intake provider migration
+        run: >-
+          psql
+          --file
+          projects/bihpugkzayenywfyajnr/supabase/migrations/20260830000100_hhm_intake.sql
+      - name: Apply the application placement migration
+        run: >-
+          psql
+          --file
+          projects/bihpugkzayenywfyajnr/supabase/migrations/20260831000100_hhm_application_placement.sql
+      - name: Apply the Supabase event-trigger ACL hardening
+        run: >-
+          psql
+          --file
+          projects/bihpugkzayenywfyajnr/supabase/migrations/20260831000200_harden_rls_auto_enable_acl.sql
+      - name: Verify RLS, grants, bucket, and points invariants
+        run: psql --file scripts/verify_intake_migration.sql
