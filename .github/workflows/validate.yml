@@ -22,6 +22,8 @@ jobs:
           node-version: '22'
       - name: Install pinned validation dependencies
         run: npm ci --ignore-scripts
+      - name: Test path-traversal and symlink containment
+        run: node --test tests/*.test.mjs
       - name: Validate JSON Schema, catalog, targets, paths, and secret boundaries
         run: npm run validate
 

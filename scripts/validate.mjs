@@ -4,6 +4,7 @@ import { dirname, join, normalize, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import { resolveOverlayPath } from './overlay-path-policy.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const errors = [];
@@ -22,7 +23,6 @@ const forbiddenKeys = new Set([
 const fail = (message) => errors.push(message);
 const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
 const exists = async (path) => access(path).then(() => true, () => false);
-const relativePathPattern = /^(?:\.|[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*)$/;
 const projectRefPattern = /^[a-z]{20}$/;
 const repoPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
@@ -39,17 +39,12 @@ function assertNoForbiddenKeys(value, path = '$') {
 }
 
 function assertContained(relativePath, label) {
-  if (!relativePathPattern.test(relativePath)) {
-    fail(`${label}: invalid relative path ${JSON.stringify(relativePath)}`);
+  try {
+    return resolveOverlayPath(root, relativePath);
+  } catch (error) {
+    fail(`${label}: ${error.message}`);
     return null;
   }
-  const candidate = resolve(root, relativePath);
-  const rel = relative(root, candidate);
-  if (rel.startsWith(`..${sep}`) || rel === '..') {
-    fail(`${label}: path escapes repository root`);
-    return null;
-  }
-  return candidate;
 }
 
 function requireFields(value, fields, label) {
